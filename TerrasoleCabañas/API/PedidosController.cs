@@ -1,0 +1,160 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TerrasoleCabañas.Model;
+
+namespace TerrasoleCabañas.API
+{
+    [Route("api/[controller]")]
+    [Authorize]
+    [ApiController]
+    public class PedidosController : ControllerBase
+    {
+        private readonly DataContext _context;
+
+        public PedidosController(DataContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/PedidosPendientes
+        [Authorize(Policy = "Empleado")]
+        [HttpGet("PedidosPendientes")]
+        public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidosPendientes()
+        {
+            try
+            {
+                var pedidos = await _context.Pedidos.Where(pedido => pedido.Estado != 0 && pedido.Estado != 3).ToListAsync();
+                if (pedidos.Count > 0)
+                {
+                    return Ok(pedidos);
+                }
+                else return NotFound("No hay pedidos pendientes");
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        // GET: api/Pedidos/Inquilino/5
+        [HttpGet("Inquilino/{id}")]
+        public async Task<ActionResult<Pedido>> GetPedido(int id)
+        {
+            try
+            {
+                var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
+                var estadia = await _context.Estadias
+                    .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
+                    .FirstOrDefaultAsync();
+                var pedidos = await _context.Pedidos.Where(pedido => pedido.EstadiaId == estadia.Id).ToListAsync();
+                if (pedidos.Count > 0)
+                {
+                    return Ok(pedidos);
+                }
+                else return NotFound("No hay pedidos pendientes");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        // PUT: api/Pedidos/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutPedido(int id, Pedido pedido)
+        {
+            try
+            {
+                if (User.IsInRole("Empleado"))
+                {   if (PedidoExists(id))
+                    {
+                        _context.Entry(pedido).State = EntityState.Modified;
+                        _context.Entry(pedido).Property(pedido => pedido.MontoPedido).IsModified = false;
+                        _context.Entry(pedido).Property(pedido => pedido.FechaPedido).IsModified = false;
+                        _context.Entry(pedido).Property(pedido => pedido.EstadiaId).IsModified = false;
+                        await _context.SaveChangesAsync();
+                        return Ok(pedido);
+                    }
+                    else return NotFound("No existe el pedido");
+                    
+                } else
+                {
+                    var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
+                    var estadia = await _context.Estadias
+                        .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
+                        .FirstOrDefaultAsync();
+                    var pedidoACambiar = await _context.Pedidos
+                        .AsNoTracking()
+                        .Where(pedido => pedido.EstadiaId == estadia.Id && pedido.Estado <= 2) // Se verifica que el pedido sea de esa estancia(de ese inquilino) y que no esté en preparación o ya entregado.
+                        .FirstOrDefaultAsync();
+                    if (pedido.FechaPedido < DateTime.Now || pedido.FechaPedido < estadia.FechaDesde || pedido.FechaPedido > estadia.FechaHasta)
+                    {
+                        return BadRequest("Seleccione una fecha válida");
+                    }
+                    if (pedidoACambiar != null)
+                    {
+                        _context.Entry(pedido).State = EntityState.Modified;
+                        await _context.SaveChangesAsync();
+                        return Ok(pedido);
+                    }
+                    else
+                    {
+                        return BadRequest("No se puede modificar el pedido solicitado");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+           
+        }
+
+        // POST: api/Pedidos
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [Authorize(Policy = "Inquilino")]
+        [HttpPost]
+        public async Task<ActionResult<Pedido>> PostPedido(Pedido pedido)
+        {
+            _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetPedido", new { id = pedido.Id }, pedido);
+        }
+
+        // DELETE: api/Pedidos/5
+        [Authorize(Policy = "Inquilino")]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Pedido>> DeletePedido(int id)
+        {
+            var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
+            var estadia = await _context.Estadias
+                .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
+                .FirstOrDefaultAsync();
+            var pedido = await _context.Pedidos.FindAsync(id);
+            if (pedido == null || pedido.EstadiaId != estadia.Id)
+            {
+                return NotFound("No se encontró o no se puede borrar el pedido solicitado");
+            }
+
+            _context.Pedidos.Remove(pedido);
+            await _context.SaveChangesAsync();
+
+            return Ok("Pedido eliminado");
+        }
+
+        private bool PedidoExists(int id)
+        {
+            return _context.Pedidos.Any(e => e.Id == id);
+        }
+    }
+}
