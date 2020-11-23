@@ -1,17 +1,17 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TerrasoleCabañas.Model;
 
 namespace TerrasoleCabañas.API
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     public class PedidosController : ControllerBase
     {
@@ -21,29 +21,9 @@ namespace TerrasoleCabañas.API
         {
             _context = context;
         }
-
-        // GET: api/PedidosPendientes
-        [Authorize(Policy = "Empleado")]
-        [HttpGet("PedidosPendientes")]
-        public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidosPendientes()
-        {
-            try
-            {
-                var pedidos = await _context.Pedidos.Where(pedido => pedido.Estado != 0 && pedido.Estado != 3).ToListAsync();
-                if (pedidos.Count > 0)
-                {
-                    return Ok(pedidos);
-                }
-                else return NotFound("No hay pedidos pendientes");
-            } 
-            catch (Exception ex)
-            {
-                return BadRequest(ex);
-            }
-        }
-
-        // GET: api/Pedidos/Inquilino/5
-        [HttpGet("Inquilino/{id}")]
+        // GET: api/Pedidos/5
+        [Authorize(Policy = "Inquilino")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<Pedido>> GetPedido(int id)
         {
             try
@@ -52,7 +32,54 @@ namespace TerrasoleCabañas.API
                 var estadia = await _context.Estadias
                     .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
                     .FirstOrDefaultAsync();
-                var pedidos = await _context.Pedidos.Where(pedido => pedido.EstadiaId == estadia.Id).ToListAsync();
+                var pedido = await _context.Pedidos.FindAsync(id);
+                if (pedido != null && pedido.EstadiaId == estadia.Id)
+                {
+                    return Ok(pedido);
+                }
+                else return NotFound("No se encontró el pedido");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        // GET: api/PedidosPendientes
+        [Authorize(Policy = "Empleado")]
+        [HttpGet("PedidosPendientes")]
+        public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidosPendientes()
+        {
+            try
+            {
+                var pedidos = await _context.Pedidos.Include(pedido => pedido.Estadia).Where(pedido => pedido.Estado != 0 && pedido.Estado != 3).ToListAsync();
+                if (pedidos.Count > 0)
+                {
+                    return Ok(pedidos);
+                }
+                else return NotFound("No hay pedidos pendientes");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+        // GET: api/Pedidos/Inquilino/
+        [Authorize(Policy = "Inquilino")]
+        [HttpGet("Inquilino/")]
+        public async Task<ActionResult<Pedido>> GetPedidosInquilino()
+        {
+            try
+            {
+                var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
+                var estadia = await _context.Estadias
+                    .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
+                    .FirstOrDefaultAsync();
+                var pedidos = await _context.Pedidos
+                    .Include(pedido => pedido.PedidoLineas)
+                    .ThenInclude(pedidoLinea => pedidoLinea.Producto_Servicio)
+                    .Where(pedido => pedido.EstadiaId == estadia.Id).ToListAsync();
                 if (pedidos.Count > 0)
                 {
                     return Ok(pedidos);
@@ -68,13 +95,14 @@ namespace TerrasoleCabañas.API
         // PUT: api/Pedidos/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")]
+        [HttpPut("{id}")] // Empleado e inquilino
         public async Task<IActionResult> PutPedido(int id, Pedido pedido)
         {
             try
             {
                 if (User.IsInRole("Empleado"))
-                {   if (PedidoExists(id))
+                {
+                    if (PedidoExists(id))
                     {
                         _context.Entry(pedido).State = EntityState.Modified;
                         _context.Entry(pedido).Property(pedido => pedido.MontoPedido).IsModified = false;
@@ -84,8 +112,9 @@ namespace TerrasoleCabañas.API
                         return Ok(pedido);
                     }
                     else return NotFound("No existe el pedido");
-                    
-                } else
+
+                }
+                else
                 {
                     var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
                     var estadia = await _context.Estadias
@@ -115,7 +144,7 @@ namespace TerrasoleCabañas.API
             {
                 return BadRequest(ex);
             }
-           
+
         }
 
         // POST: api/Pedidos
@@ -125,9 +154,20 @@ namespace TerrasoleCabañas.API
         [HttpPost]
         public async Task<ActionResult<Pedido>> PostPedido(Pedido pedido)
         {
+            var inquilino = await _context.Inquilinos.Where(inquilino => inquilino.Email == User.Identity.Name).FirstOrDefaultAsync();
+            var estadia = await _context.Estadias
+                .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
+                .FirstOrDefaultAsync();
+            if (pedido.FechaPedido < DateTime.Now || pedido.FechaPedido < estadia.FechaDesde || pedido.FechaPedido > estadia.FechaHasta)
+            {
+                return BadRequest("Seleccione una fecha válida");
+            }
             _context.Pedidos.Add(pedido);
+            foreach (PedidoLinea pedidoLinea in pedido.PedidoLineas)
+            {
+                _context.Entry(pedidoLinea.Producto_Servicio).State = EntityState.Unchanged;
+            }
             await _context.SaveChangesAsync();
-
             return CreatedAtAction("GetPedido", new { id = pedido.Id }, pedido);
         }
 
@@ -140,12 +180,19 @@ namespace TerrasoleCabañas.API
             var estadia = await _context.Estadias
                 .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
                 .FirstOrDefaultAsync();
-            var pedido = await _context.Pedidos.FindAsync(id);
+            var pedido = await _context.Pedidos.Include(pedido => pedido.PedidoLineas).Where(pedido => pedido.Id == id).FirstOrDefaultAsync();
             if (pedido == null || pedido.EstadiaId != estadia.Id)
             {
                 return NotFound("No se encontró o no se puede borrar el pedido solicitado");
             }
-
+            if(pedido.Estado == 2 || pedido.Estado == 3)
+            {
+                return BadRequest("No se puede cancelar un pedido en prepración");
+            }
+            foreach(PedidoLinea pedidoLinea in pedido.PedidoLineas)
+            {
+                _context.PedidoLineas.Remove(pedidoLinea);
+            }
             _context.Pedidos.Remove(pedido);
             await _context.SaveChangesAsync();
 

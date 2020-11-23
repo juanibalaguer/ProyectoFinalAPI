@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using TerrasoleCabañas.Model;
 
 namespace TerrasoleCabañas.API
@@ -37,11 +35,12 @@ namespace TerrasoleCabañas.API
                 }
 
                 return Ok(inquilino);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex);
             }
-            
+
         }
 
         // PUT: api/Inquilinos/
@@ -50,21 +49,21 @@ namespace TerrasoleCabañas.API
         [HttpPut]
         public async Task<IActionResult> PutInquilino(Inquilino inquilino)
         {
-                try
+            try
+            {
+                if (_context.Inquilinos.AsNoTracking().FirstOrDefault(i => i.Email == User.Identity.Name) != null)
                 {
-                    if (_context.Inquilinos.AsNoTracking().FirstOrDefault(i => i.Email == User.Identity.Name) != null)
-                    {
-                        _context.Entry(inquilino).State = EntityState.Modified;
-                        await _context.SaveChangesAsync();
-                        return Ok(inquilino);
-                    }
+                    _context.Entry(inquilino).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                    return Ok(inquilino);
+                }
 
-                    return BadRequest("No se encontró el inquilino");
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(ex);
-                }
+                return BadRequest("No se encontró el inquilino");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
         }
         private bool InquilinoExists(int id)
         {

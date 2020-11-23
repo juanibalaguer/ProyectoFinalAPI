@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using TerrasoleCabañas.Model;
 
 namespace TerrasoleCabañas.API
 {
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     public class PedidoLineasController : ControllerBase
     {
@@ -63,8 +62,10 @@ namespace TerrasoleCabañas.API
         [HttpPost]
         public async Task<ActionResult<PedidoLinea>> PostPedidoLinea(PedidoLinea pedidoLinea)
         {
-            _context.PedidoLineas.Add(pedidoLinea);
-            await _context.SaveChangesAsync();
+            _context.Attach(pedidoLinea);
+            _context.Entry(pedidoLinea).State = EntityState.Added;
+            _context.Entry(pedidoLinea.Producto_Servicio).State = EntityState.Unchanged;
+          await _context.SaveChangesAsync();
             return CreatedAtAction("GetPedidoLinea", new { id = pedidoLinea.Id }, pedidoLinea);
         }
 
@@ -93,9 +94,9 @@ namespace TerrasoleCabañas.API
             {
                 return BadRequest("No puede eliminar ese ítem");
             }
-            
 
-            
+
+
         }
 
         private bool PedidoLineaExists(int id)

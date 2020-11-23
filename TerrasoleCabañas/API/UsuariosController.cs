@@ -1,17 +1,16 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using TerrasoleCabañas.Model;
 
 namespace TerrasoleCabañas.API
@@ -38,7 +37,7 @@ namespace TerrasoleCabañas.API
             try
             {
                 var usuario = await _context.Usuarios.Where(usuario => usuario.Email == User.Identity.Name).FirstOrDefaultAsync();
-                if(usuario != null)
+                if (usuario != null)
                 {
                     return Ok(usuario);
                 }
@@ -77,7 +76,8 @@ namespace TerrasoleCabañas.API
                        .IsModified = false;
                     await _context.SaveChangesAsync();
                     return Ok(usuario);
-                } else
+                }
+                else
                 {
                     return BadRequest("El usuario que desea modificar no coincide con su usuario");
                 }
@@ -88,7 +88,6 @@ namespace TerrasoleCabañas.API
                 return BadRequest(ex);
             }
 
-            return NoContent();
         }
 
         // POST: api/Usuarios
@@ -101,7 +100,7 @@ namespace TerrasoleCabañas.API
             try
             {
                 var emailNoDisponible = await _context.Usuarios.Where(u => u.Email == usuario.Email).AnyAsync();
-                if (emailNoDisponible )
+                if (emailNoDisponible)
                 {
                     return BadRequest("El email ingresado no está disponible");
                 }
@@ -120,7 +119,7 @@ namespace TerrasoleCabañas.API
             {
                 return BadRequest(ex);
             }
-        } 
+        }
 
         // POST: api/Usuarios/Login
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
@@ -141,7 +140,7 @@ namespace TerrasoleCabañas.API
                 if (usuario == null || hashContraseña != usuario.Contraseña)
                 {
                     return BadRequest("Usuario y/o contraseña incorrecto/s");
-                } 
+                }
                 else
                 {
                     var key = new SymmetricSecurityKey(
@@ -163,7 +162,7 @@ namespace TerrasoleCabañas.API
                     );
                     return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                 }
-               
+
             }
             catch (Exception ex)
             {

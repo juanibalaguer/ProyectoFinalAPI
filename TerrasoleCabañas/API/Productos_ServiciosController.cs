@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TerrasoleCabañas.Model;
 
 namespace TerrasoleCabañas.API
@@ -35,7 +34,8 @@ namespace TerrasoleCabañas.API
                 if (productos.Count > 0)
                 {
                     return Ok(productos);
-                } else
+                }
+                else
                 {
                     return NotFound("No se encontraron productos");
                 }
@@ -45,7 +45,7 @@ namespace TerrasoleCabañas.API
             {
                 return BadRequest(ex);
             }
-            
+
         }
         // GET: api/Productos_Servicios/Servicios
         [HttpGet("Servicios")]
@@ -85,11 +85,12 @@ namespace TerrasoleCabañas.API
                     return NotFound("El producto/servicio especificado no existe");
                 }
                 return Ok(producto_Servicio);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex);
             }
-            
+
         }
 
         // PUT: api/Productos_Servicios/5
@@ -118,7 +119,8 @@ namespace TerrasoleCabañas.API
                         .IsModified = false;
                     await _context.SaveChangesAsync();
                     return Ok(producto_Servicio);
-                } else
+                }
+                else
                 {
                     return NotFound("El producto/servicio especificado no existe");
                 }

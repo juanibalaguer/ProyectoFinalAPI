@@ -2,7 +2,6 @@ C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\bin\Debug\netcoreapp3.1\appsettings.json
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\bin\Debug\netcoreapp3.1\Properties\launchSettings.json
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\bin\Debug\netcoreapp3.1\TerrasoleCabañas.exe
-C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.csprojAssemblyReference.cache
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.AssemblyInfoInputs.cache
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.AssemblyInfo.cs
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.RazorTargetAssemblyInfo.cache
@@ -156,3 +155,4 @@ C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.csproj.CoreCompileInputs.cache
 C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\garba\Desktop\Programación\Tecnicatura en Desarrollo de Software\.NET\TerrasoleCabañas\TerrasoleCabañas\obj\Debug\netcoreapp3.1\TerrasoleCabañas.csprojAssemblyReference.cache

@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TerrasoleCabañas.Model
 {
     public enum estadoPedido
     {
         Borrador = 0, // El inquilino está armando un pedido
-        Confirmado = 1, 
+        Confirmado = 1,
         EnPreparacion = 2,
         Entregado = 3
     }
@@ -18,6 +16,8 @@ namespace TerrasoleCabañas.Model
         [Key]
         public int Id { get; set; }
         [Required]
+        public string Titulo { get; set; }
+        [Required]
         public DateTime FechaPedido { get; set; }
         [Required]
         public int Estado { get; set; }
@@ -25,10 +25,14 @@ namespace TerrasoleCabañas.Model
         public decimal MontoPedido { get; set; }
         [Required]
         public int EstadiaId { get; set; }
+        public Estadia Estadia { get; set; }
+        [Required]
+        public List<PedidoLinea> PedidoLineas { get; set; }
+
 
         public string NombreEstado()
         {
-            return Estado >= 0 ? ((estadoPedido) Estado).ToString() : "";
+            return Estado >= 0 ? ((estadoPedido)Estado).ToString() : "";
         }
         public static IDictionary<int, string> ObtenerEstados()
         {

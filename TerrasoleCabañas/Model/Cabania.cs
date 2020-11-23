@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TerrasoleCabañas.Model
 {
@@ -15,8 +11,8 @@ namespace TerrasoleCabañas.Model
         public int Categoria { get; set; }
         [Required]
         public int Capacidad { get; set; }
-        [Required] 
+        [Required]
         public decimal PrecioPorDia { get; set; }
-    
+
     }
 }

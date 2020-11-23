@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace TerrasoleCabañas.Model
 {
@@ -18,7 +15,7 @@ namespace TerrasoleCabañas.Model
         public Inquilino Inquilino { get; set; }
         [Required]
         public DateTime FechaDesde { get; set; }
-        [Required] 
+        [Required]
         public DateTime FechaHasta { get; set; }
         [Required]
         public decimal MontoTotal { get; set; }
