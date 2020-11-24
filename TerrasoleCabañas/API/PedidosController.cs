@@ -95,14 +95,14 @@ namespace TerrasoleCabañas.API
         // PUT: api/Pedidos/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [HttpPut("{id}")] // Empleado e inquilino
-        public async Task<IActionResult> PutPedido(int id, Pedido pedido)
+        [HttpPut] // Empleado e inquilino
+        public async Task<IActionResult> PutPedido(Pedido pedido)
         {
             try
             {
                 if (User.IsInRole("Empleado"))
                 {
-                    if (PedidoExists(id))
+                    if (PedidoExists(pedido.Id))
                     {
                         _context.Entry(pedido).State = EntityState.Modified;
                         _context.Entry(pedido).Property(pedido => pedido.MontoPedido).IsModified = false;
@@ -121,8 +121,8 @@ namespace TerrasoleCabañas.API
                         .Where(estadia => estadia.InquilinoId == inquilino.Id && estadia.FechaDesde <= DateTime.Now && estadia.FechaHasta >= DateTime.Now)
                         .FirstOrDefaultAsync();
                     var pedidoACambiar = await _context.Pedidos
-                        .AsNoTracking()
-                        .Where(pedido => pedido.EstadiaId == estadia.Id && pedido.Estado <= 2) // Se verifica que el pedido sea de esa estancia(de ese inquilino) y que no esté en preparación o ya entregado.
+                        .Include(p => p.PedidoLineas)
+                        .Where(p => p.Id == pedido.Id && p.EstadiaId == estadia.Id && p.Estado <= 2) // Se verifica que el pedido sea de esa estancia(de ese inquilino) y que no esté en preparación o ya entregado.
                         .FirstOrDefaultAsync();
                     if (pedido.FechaPedido < DateTime.Now || pedido.FechaPedido < estadia.FechaDesde || pedido.FechaPedido > estadia.FechaHasta)
                     {
@@ -130,7 +130,31 @@ namespace TerrasoleCabañas.API
                     }
                     if (pedidoACambiar != null)
                     {
-                        _context.Entry(pedido).State = EntityState.Modified;
+                        _context.Entry(pedidoACambiar).CurrentValues.SetValues(pedido);
+                        //Borrar lineasPedido que se hayan borrado
+                        foreach (PedidoLinea pedidoLineaExistente in pedidoACambiar.PedidoLineas)
+                        {
+                            if (!pedido.PedidoLineas.Any(pedidoLinea => pedidoLinea.Id == pedidoLineaExistente.Id))
+                                _context.PedidoLineas.Remove(pedidoLineaExistente);
+                        }
+                        foreach (PedidoLinea pedidoLinea in pedido.PedidoLineas)
+                        {
+                            var pedidoLineaExistente = pedidoACambiar.PedidoLineas
+                                .Where(p => p.Id == pedidoLinea.Id)
+                                .SingleOrDefault();
+
+                            if (pedidoLineaExistente != null)
+                            {
+                                // Actualizar línea
+                                _context.Entry(pedidoLineaExistente).CurrentValues.SetValues(pedidoLinea);
+                            }
+                            else
+                            {
+                                // Insertar línea
+                                pedidoACambiar.PedidoLineas.Add(pedidoLinea);
+                                _context.Entry(pedidoLinea.Producto_Servicio).State = EntityState.Unchanged;
+                            }
+                        }
                         await _context.SaveChangesAsync();
                         return Ok(pedido);
                     }
