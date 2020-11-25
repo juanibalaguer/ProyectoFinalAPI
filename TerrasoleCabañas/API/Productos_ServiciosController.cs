@@ -93,44 +93,7 @@ namespace TerrasoleCabañas.API
 
         }
 
-        // PUT: api/Productos_Servicios/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
-        [Authorize(Policy = "Empleado")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProducto_Servicio(int id, Producto_Servicio producto_Servicio)
-        {
-            try
-            {
-                if (Producto_ServicioExists(id))
-                {
-                    _context.Entry(producto_Servicio).State = EntityState.Modified;
-                    _context.Entry(producto_Servicio)
-                        .Property(producto_Servicio => producto_Servicio.Consumible)
-                        .IsModified = false;
-                    _context.Entry(producto_Servicio)
-                        .Property(producto_Servicio => producto_Servicio.Nombre)
-                        .IsModified = false;
-                    _context.Entry(producto_Servicio)
-                        .Property(producto_Servicio => producto_Servicio.Consumible)
-                        .IsModified = false;
-                    _context.Entry(producto_Servicio)
-                        .Property(producto_Servicio => producto_Servicio.Descripcion)
-                        .IsModified = false;
-                    await _context.SaveChangesAsync();
-                    return Ok(producto_Servicio);
-                }
-                else
-                {
-                    return NotFound("El producto/servicio especificado no existe");
-                }
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex);
-            }
-        }
+        
         private bool Producto_ServicioExists(int id)
         {
             return _context.Productos_Servicios.Any(e => e.Id == id);

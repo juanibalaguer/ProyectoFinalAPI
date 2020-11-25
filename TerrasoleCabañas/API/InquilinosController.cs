@@ -54,6 +54,13 @@ namespace TerrasoleCabañas.API
                 if (_context.Inquilinos.AsNoTracking().FirstOrDefault(i => i.Email == User.Identity.Name) != null)
                 {
                     _context.Entry(inquilino).State = EntityState.Modified;
+                    _context.Entry(inquilino)
+                        .Property(inquilino => inquilino.Email)
+                        .IsModified = false;
+
+                    await _context.SaveChangesAsync();
+                    return Ok(inquilino);
+                    
                     await _context.SaveChangesAsync();
                     return Ok(inquilino);
                 }
