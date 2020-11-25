@@ -20,6 +20,10 @@ namespace TerrasoleCabañas.Model
         [Required]
         public string Apellido { get; set; }
         [Required]
+        public string Dni { get; set; }
+        [Required]
+        public string Telefono { get; set; }
+        [Required]
         [DataType(DataType.EmailAddress)]
         public string Email { get; set; }
         [Required]

@@ -48,11 +48,15 @@ namespace TerrasoleCabañas.API
         // GET: api/PedidosPendientes
         [Authorize(Policy = "Empleado")]
         [HttpGet("PedidosPendientes")]
-        public async Task<ActionResult<IEnumerable<Pedido>>> GetPedidosPendientes()
+        public async Task<ActionResult<Pedido>> GetPedidosPendientes()
         {
             try
             {
-                var pedidos = await _context.Pedidos.Include(pedido => pedido.Estadia).Where(pedido => pedido.Estado != 0 && pedido.Estado != 3).ToListAsync();
+                var pedidos = await _context.Pedidos
+                    .Include(pedido => pedido.Estadia)
+                    .Include(pedido => pedido.PedidoLineas)
+                    .ThenInclude(pedidoLinea => pedidoLinea.Producto_Servicio)
+                    .Where(pedido => pedido.Estado != 0 && pedido.Estado != 3).ToListAsync();
                 if (pedidos.Count > 0)
                 {
                     return Ok(pedidos);
@@ -137,6 +141,7 @@ namespace TerrasoleCabañas.API
                             if (!pedido.PedidoLineas.Any(pedidoLinea => pedidoLinea.Id == pedidoLineaExistente.Id))
                                 _context.PedidoLineas.Remove(pedidoLineaExistente);
                         }
+                        List<PedidoLinea> pedidoLineasNuevas = new List<PedidoLinea>();
                         foreach (PedidoLinea pedidoLinea in pedido.PedidoLineas)
                         {
                             var pedidoLineaExistente = pedidoACambiar.PedidoLineas
@@ -150,11 +155,18 @@ namespace TerrasoleCabañas.API
                             }
                             else
                             {
-                                // Insertar línea
-                                pedidoACambiar.PedidoLineas.Add(pedidoLinea);
-                                _context.Entry(pedidoLinea.Producto_Servicio).State = EntityState.Unchanged;
+                               
+                                pedidoLineasNuevas.Add(pedidoLinea);
                             }
                         }
+                        if(pedidoLineasNuevas.Count > 0) {
+                            foreach (PedidoLinea pedidoLineaNueva in pedidoLineasNuevas)
+                            {
+                                pedidoACambiar.PedidoLineas.Add(pedidoLineaNueva);
+                                _context.Entry(pedidoLineaNueva.Producto_Servicio).State = EntityState.Unchanged;
+                            }
+                        }
+                        
                         await _context.SaveChangesAsync();
                         return Ok(pedido);
                     }
@@ -227,5 +239,7 @@ namespace TerrasoleCabañas.API
         {
             return _context.Pedidos.Any(e => e.Id == id);
         }
+
+     
     }
 }
